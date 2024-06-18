@@ -1,27 +1,29 @@
 ---
+
 title: "Honoを使い倒したい"
 emoji: "❤️‍🔥"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: []
+topics: [hono,typescript,cloudflareworkers]
 published: false
+publication_name: aishift
 ---
 
 # はじめに
 
 こんにちは、AI Shift バックエンドエンジニアの[@sugar235711](https://twitter.com/sugar235711)です。
-この記事では、Honoの使い方をおさらいした上で、API開発を通じてHonoの実際の開発で使い倒すためのTipsを紹介します。
+この記事では、Honoの使い方をおさらいし、API開発を通じてHonoの実際の開発で役立つTipsを紹介します。
 
-Honoそもそものコンセプトや網羅的な実装例については、公式ドキュメントを参照してください。
+Honoの基本的なコンセプトや網羅的な実装例については、公式ドキュメントを参照してください。
 https://hono.dev/concepts/motivation
 
 # 基本編
 
-この章では、Honoの基本的な使い方について紹介します。
+この章では、Honoの基本的な使い方を紹介します。
 
 ## App/Contextオブジェクトの使い方
 
 Honoでは、プライマリオブジェクトであるHonoインスタンスを生成し、そのインスタンスをもとにAPIのエンドポイントを定義します。
-```ts
+```ts:example.ts
 import { Hono } from 'hono'
 
 const app = new Hono()
@@ -32,14 +34,13 @@ export default app
 
 https://hono.dev/api/hono#app-hono
 
-
 Honoにはリクエスト/レスポンスを扱いやすくする**Context**というオブジェクトがあります。上記の例で言えば、`c`がContextオブジェクトです。
 
 https://hono.dev/api/context#context
 
-この**Context**オブジェクトは、ヘッダーやリクエストボディ、レスポンスボディなどの操作を行うためのメソッドを提供はもちろん、環境変数やカスタムミドルウェアを設定することもできます。
+この**Context**オブジェクトは、ヘッダーやリクエストボディ、レスポンスボディなどの操作を行うためのメソッドを提供します。さらに、環境変数やカスタムミドルウェアを設定することもできます。
 
-```ts
+```ts:example.ts
 type Env = {
   Variables: {
     hoge: () => void
@@ -62,11 +63,11 @@ app.get('/hello', (c) => {
 })
 ```
 
-上記のように、`Hono<Env>`とすることで、function等をContext経由で型安全に別メソッドに伝播することができます。
+上記のように、`Hono<Env>`とすることで、関数等をContext経由で型安全に別メソッドに伝播することができます。
 
-さて、このままでも十分便利ですが実際にAPIを作成する際はカスタムのHonoインスタンス(Factory)を作成して使い回すとファイル分割等を行った際に便利です。
+さて、このままでも十分便利ですが、実際にAPIを作成する際は**カスタムのHonoインスタンス**（Factory）を作成して使い回すと、ファイル分割等を行った際に便利です。
 
-- ReturnTypeを使用し、Bindingの型付けがされたHonoインスタンスを返す関数を作成する
+- ReturnTypeを使用し、型付けがされたHonoインスタンスを返す関数を作成します。
 
 ```ts:customHono.ts
 export const newApp = () => {
@@ -80,15 +81,14 @@ export const newApp = () => {
 export type App = ReturnType<typeof newApp>;
 ```
 
-
-- 作成したHonoインスタンスを使ってAPIを作成する
+- 作成したHonoインスタンスを使ってAPIを作成します。
 ```ts:routes/hoge.ts
 export const hogeApi = (app: App) => {
     app.get('/hoge', (c) => c.text('hoge'))
 }
 ```
 
-- Honoインスタンスをシングルトンで使い回す
+- Honoインスタンスをシングルトンで使い回します。
 ```ts:entrypoint.ts
 import { newApp } from './customHono';
 import { hogeApi } from './routes/hoge';
@@ -96,15 +96,19 @@ import { hogeApi } from './routes/hoge';
 const app = newApp();
 hogeApi(app)
 //...
-
 ```
 
-上記のように自身で定義することも可能ですが、Honoの公式HelperとしてFactoryメソッドが用意されているのでそれらを使用するのも良いと思います。
+上記のように自分で定義することも可能ですが、Honoの公式ヘルパーとしてFactoryメソッドが用意されているので、それらを使用するのも良いでしょう。
 https://hono.dev/helpers/factory
 
+また、Hono作者の[＠yusukebeさん](https://x.com/yusukebe)も型付きのAppを返す方法を紹介しています。
+
+@[tweet](https://x.com/yusukebe/status/1780538942032650337)
+
 ## ミドルウェアの設計
-APIにおけるミドルウェアの責務は、ユーザー認証・認可、ロギング、キャッシュ等のAPI呼び出し時の共通処理を行うことです。
-Honoでは、ビルトインで用意されているミドルウェアや自身で作成したカスタムのミドルウェアを使用することが可能です。
+
+APIにおけるミドルウェアの責務は、ユーザー認証・認可、ロギング、キャッシュ等の共通処理を行うことです。
+Honoでは、ビルトインのミドルウェアや、自作のカスタムミドルウェアを使用することが可能です。
 
 ```ts:example.ts
 const example = (): MiddlewareHandler => {
@@ -114,7 +118,7 @@ const example = (): MiddlewareHandler => {
     }
 }
 
-// or
+// ---or---
 import { createMiddleware } from 'hono/factory'
 
 const example = createMiddleware(async (c, next) => {
@@ -129,19 +133,18 @@ app.use('/posts/*', cors()) // built-in middleware
 app.post('/posts', (c) => c.text('Created!', 201))
 ```
 
-ミドルウェア自体は定義順に実行されるため、下記のような実行順序になります。
+ミドルウェアは定義順に実行されるため、以下のような実行順序になります。
 ```
 example() -> cors() -> post handler
 ```
 
-nextの後に処理を追加しStackのような処理を実現することも可能です。詳細については、公式ドキュメントを参照してください。
+`next`の後に処理を追加し、スタックのような処理を実現することも可能です。詳細については、公式ドキュメントを参照してください。
 https://hono.dev/guides/middleware#execution-order
 
+このミドルウェアの中では任意の処理を行うことができますが、基本的には**1リクエストのスコープに閉じた**動作を行うべきです。例えば、ユーザーID等の**リクエストごとに一意に扱いたい情報をContextに詰めて伝播させる**などです。
 
-このミドルウェアの中では任意の処理を行うことができますが、基本的には1リクエストのスコープに閉じた動作を行うべきです。(例えば、ユーザーID等のリクエストごとに一意に扱いたい情報をContextに詰め伝播させるなど)
-
-下記は、リクエスト時に初期化を行うミドルウェアの例です。
-要点としては、リクエストごとに一意なIDを生成し、リクエストごとに一意なロガーを生成してContextに詰めています。
+下記はリクエスト時に初期化を行うミドルウェアの例です。
+リクエストごとに一意なIDとロガーを生成してContextに詰めています。
 ```ts:example.ts
 export const init = (): MiddlewareHandler<HonoEnv> => {
     return async (c, next) => {
@@ -157,13 +160,11 @@ export const init = (): MiddlewareHandler<HonoEnv> => {
 }
 ```
 
-上記によって、リクエストごとに一意なロガーを生成し、Contextを通してhandlerから安全にLoggerを利用することができます。
-
+上記のように任意のオブジェクトをContextを通してhandlerから安全に利用することが可能になります。
 
 ## エラーハンドリングについて
 
-Honoでは、`onError`メソッドによりthorwされたエラーをキャッチしトップレベルでエラーハンドリングを行うことができます。
-
+Honoでは、`onError`メソッドによりスローされたエラーをキャッチし、トップレベルでエラーハンドリングを行うことができます。
 
 https://hono.dev/api/hono#error-handling
 
@@ -185,13 +186,13 @@ app.post('/auth', async (c, next) => {
 })
 ```
 
-上記のようにHonoには`HTTPException`クラスが用意されており、認証時のエラーなどのHTTPステータスコードを指定してエラーをthrowするように推奨されています。
+上記のようにHonoには`HTTPException`クラスが用意されており、認証時のエラーなどのHTTPステータスコードを指定してエラーをスローすることが推奨されています。
 
 https://hono.dev/api/exception#exception
 
+### エラーハンドリングの例
 
-- エラーハンドリングの例
-より実践的な例として、HonoのCustom Instance内にonErrorメソッドを定義し、各エラータイプごとに処理を出し分けるハンドラーを定義しエラーハンドリングを行います。
+より実践的な例として、Honoのカスタムインスタンス内にonErrorメソッドを定義し、各エラータイプごとに処理を分けるハンドラーを定義してエラーハンドリングを行います。
 
 ```ts:example.ts
 export const newApp = () => {
@@ -216,7 +217,6 @@ export const handleError = (err: Error, c: Context<HonoEnv>): Response => {
             {
                 error: {
                     code,
-                    docs: "https://example.com/docs",
                     message: err.message,
                     requestId: c.get("requestId"),
                 },
@@ -236,7 +236,6 @@ export const handleError = (err: Error, c: Context<HonoEnv>): Response => {
         {
             error: {
                 code: "INTERNAL_SERVER_ERROR",
-                docs: "https://example.com/docs",
                 message: err.message ?? "something unexpected happened",
                 requestId: c.get("requestId"),
             },
@@ -246,12 +245,12 @@ export const handleError = (err: Error, c: Context<HonoEnv>): Response => {
 }
 ```
 
-
 ### バリデーションエラーについて
 
-致命的なエラー以外にも、バリデーションエラーなどのエラーをハンドリングすることがあります。
-HonoではZodやVailbotなどのライブラリを組み合わせ、リクエストのスキーマに対するバリデーションを簡単に実装することができます。
+致命的なエラー以外にも、**バリデーションエラー**などのエラーをハンドリングすることがあります。
+HonoではZodやVailbotなどのライブラリを組み合わせ、**リクエストのスキーマに対するバリデーション**を簡単に実装することができます。
 https://hono.dev/snippets/validator-error-handling#error-handling-in-validator
+
 ```ts:example.ts
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
@@ -278,26 +277,26 @@ app.post(
 )
 ```
 
-後述するOpenAPIHonoとdefaultHooksを組み合わせることで、zodエラメッセージを加工する例を紹介します。
-
-
+後述する**OpenAPIHonoとdefaultHooks**を組み合わせることで、zodエラーメッセージを加工する例を紹介します。
 
 ## 環境変数について
-昨今ではJavaScriptを取り巻く環境下の多様化により、環境変数の読み込み方も多様化しています。
-例えば下記のような主要なランタイムでは、それぞれ異なる環境変数の読み込み方法があります。
-- Workerd
- - wrangler.toml/.dev.vars
-- Deno
+
+昨今ではJavaScriptを取り巻く環境が多様化しており、環境変数の読み込み方も多様化しています。
+例えば、下記のような主要なランタイムでは、それぞれ異なる環境変数の読み込み方法があります。
+
+- **Workerd**
+  - wrangler.toml/.dev.vars
+- **Deno**
   - Deno.env
-  - .env file
-- Bun
+  - .envファイル
+- **Bun**
   - Bun.env
   - process.env
-- Node
+- **Node**
   - process.env
 
-そのため、仮にCloudflare Workersで開発していたアプリケーションをコンテナ化して別のランタイムで動かす場合、環境変数の読み込み方法が異なるためコードを書き換える必要があります。
-このような負担を減らすため、Honoではランタイムによらず環境変数を読み込むためのヘルパーが用意されています。
+例えば、仮にCloudflare Workersで開発していたアプリケーションをコンテナ化して別のランタイムで動かす場合、環境変数の読み込み方法が異なるためコードを書き換える必要があります。
+このような環境ごとに際を減らすため、Honoでは**ランタイムによらず環境変数を読み込む**ためのヘルパーが用意されています。
 
 https://hono.dev/helpers/adapter#env
 
@@ -310,8 +309,8 @@ app.get('/env', (c) => {
 })
 ```
 
-adapterを通すことでランタイムによらない環境変数の読み込みを行うことが可能となります。
-さらに下記のようにzodと組み合わせることで型安全に環境変数の値を取り出すことができます。
+Hono Adapterを通すことで**ランタイムによらない環境変数の読み込み**を行うことが可能となります。
+さらに、下記のように**zodと組み合わせることで型安全に環境変数の値を取り出す**ことができます。
 
 ```ts:example.ts
 import { env } from 'hono/adapter'
@@ -337,14 +336,12 @@ const init = (): MiddlewareHandler<HonoEnv> => {
 }
 ```
 
-
 ## 構造化ロギングについて
 
-一般的に構造化ロギングを行おうとする際に、RequestIDを付与したContextualなLoggerを作成することが多いです。
-しかし、Node.js等の環境ではシングルスレッドで動作するため、非同期処理を行う際にグローバルにRequestIDを保持することが難しいです。
-そのため、AsyncLocalStorageを組み合わせることでこれを回避することができます。
+一般的に**構造化ロギング**を行う際に、**RequestIDを付与したLogger**を作成することが多いです。
+しかし、Node.js等の環境では**シングルスレッド**で動作するため、非同期処理を行う際にグローバルにRequestIDを保持することが難しいです。そのため、**AsyncLocalStorage**を組み合わせることでこれを回避することができます。
 
-```ts
+```ts:example.ts
 const asyncLocalStorage = new AsyncLocalStorage<Map<string, any>>();
 
 export function runWithRequestId(requestId: string, fn: () => void) {
@@ -358,12 +355,11 @@ export function getRequestId(): string | undefined {
   return store?.get('requestId');
 }
 ```
-`getRequestId()`を任意の処理で呼び出すことで、リクエストごと一意なRequestIDを保持したloggerを作成できます。
+`getRequestId()`を任意の場所で呼び出すことで、リクエストごとに一意なRequestIDを保持したLoggerを作成できます。
 
-
-上記が一般的なロギングのプラクティスかと思いますが、HonoではContextオブジェクトを伝播させることでも、この問題を解決することができます。
-例えば、[ミドルウェアの設計](#ミドルウェアの設計)で紹介した初期化処理でLoggerをContextに詰めることで、リクエストごとのLoggerを保持することができます。
-```ts
+上記が一般的なロギングのプラクティスですが、HonoではContextを通して伝播させることでこの問題を解決することができます。
+例えば、[ミドルウェアの設計](#ミドルウェアの設計)で紹介した初期化処理で**LoggerをContextに詰める**ことで、**リクエストごとのLoggerを保持する**ことができます。
+```ts:example.ts
 // middleware
 export const init = (): MiddlewareHandler<HonoEnv> => {
     return async (c, next) => {
@@ -386,18 +382,17 @@ app.get('/hello', (c) => {
 })
 ```
 
-ただし、実務だとCleanArchitrctureに則り、レイヤー分けがされている場合が多くレイヤー間でContextを伝播させない選択をする場合は依然としてAsyncLocalStorageを使用することになると思います。
-
+ただし、実務ではクリーンアーキテクチャに則り、レイヤー分けがされている場合が多く、レイヤー間でContextを伝播させない選択をする場合は依然としてAsyncLocalStorageを使用することになると思います。
 
 ## オブザーバビリティについて
 
-オブザーバビリティはログ、トレース、メトリクスの3つの観点からシステムの内部状態を可視化し、蚊観測性を向上させます。OpenTelemetryはこの3つの観点を統一的に扱うためのライブラリです。
-このOpenTelemetryのSDKと組み合わせることでHonoでもトレースを取ることができます。
-ロギング同様に、Context経由でTracerを伝播させることで、リクエストごとのトレースを取ることができます。
+オブザーバビリティは**ログ、トレース、メトリクス**の3つの観点からシステムの内部状態を可視化し、観測性を向上させることです。
+OpenTelemetry[^1]のSDKと組み合わせることでHonoでもトレースを取ることができます。ロギング同様に、**Context経由でTracerを伝播させる**ことで、リクエストごとのトレースを取ることができます。
 
+[^1]:**OpenTelemetry**はログ、トレース、メトリクスを統一的に扱うためのライブラリです。
 https://opentelemetry.io/
 
-```ts
+```ts:example.ts
 import { Tracer } from "@opentelemetry/api";
 
 type ServiceContext = {
@@ -422,10 +417,9 @@ app.get('/hoge', (c) => {
 })
 ```
 
-例えばCloudflare Workersで計装を行えるOTelライブラリがあります。
+より実践的な例として、Cloudflare Workersで計装を行えるOpenTelemetryライブラリを紹介します。
 https://github.com/evanderkoogh/otel-cf-workers
-このライブラリとHonoを組み合わせ、Cloudflare Workers上で簡単に計装を行うことが可能です。
-下記ではランダムに複数ユーザーを登録するAPIを計装しています。(わざとBulk Insertをしていません)
+このライブラリと**Honoを組み合わせ、Cloudflare Workers上で簡単に計装を行う**ことが可能です。下記ではランダムに複数ユーザーを登録するAPIを計装しています。(わざとBulk Insertをしていません)
 ```ts
 export const registerUserRandomPostApi = (app: App) =>
     app.openapi(postUsersRoute, async (c: AppContext) => {
@@ -445,34 +439,37 @@ export const registerUserRandomPostApi = (app: App) =>
                         return null;
                     }
                     insertedUsers.push(u[0]);
-                    s.end();
+                    s.end(); // 1roopごとのSpanを終了
                 }
                 return insertedUsers;
             });
-            dbSpan.end();
+            dbSpan.end(); // Transaction内のSpanを終了
             //...
             return c.json(res, 200);
         });
     });
 ```
-ビジネスロジックに計装を行い、リクエストごとのトレースを取ることで、APIのパフォーマンスを可視化することができます。
-下記はExporterをBaselimeとして設定すると下記のようにトレースを可視化することができます。
-![alt text](/images/hono/instrument.png)
+上記のように**ビジネスロジックに計装**を行い、リクエストごとのトレースを取ることで、**APIのパフォーマンスを可視化**することができます。
 
+下記は**Exporter**を**Baselime**[^2]に設定し、Cloudflare Workers上でのTraceを可視化する例です。
+![alt text](/images/hono/instrument.png)
+[^2]: https://baselime.io/
 # 応用編
-ここからは3rdpatyライブラリとの組み合わせや、より実践的な開発Tipsについて紹介します。
+
+ここからはサードパーティライブラリとの組み合わせや、より実践的な開発Tipsについて紹介します。
 
 ## 様々なRequest/Responseの扱い
 
-### File Upload
-ファイルアップロードといえば`multipart/form-data`ですが、HonoではHonoRequestに`parseBody`が実装されており、これにより簡単にmultipart/form-dataを扱うことができます。
+### ファイルアップロード
+
+ファイルアップロードといえば`multipart/form-data`ですが、Honoでは**HonoRequest**に`parseBody`が実装されており、これにより簡単に`multipart/form-data`を扱うことができます。
 https://hono.dev/docs/api/request
 
 ```ts:example.ts
 const body = await c.req.parseBody({ all: true })
 ```
 
-`@hono/zod-openapi`との組み合わせで、複数ファイルアップロードのスキーマを定義することも可能です。
+`@hono/zod-openapi`との組み合わせで、複数ファイルアップロードのスキーマを定義し、型安全にファイルを扱うことができます。
 ```ts:schema.ts
 const fileUploadRequestBodySchema = z.object({
   files: z
@@ -502,15 +499,16 @@ const reqValidationResult = fileUploadRequestBodySchema.safeParse(
 //reqValidationResult.data.files: File[]
 ```
 
-またBody Limit Middlewareと組み合わせることで、アップロードされたファイルのサイズに対して制限をかけることも可能です。
+また**Body Limit Middleware**と組み合わせることで、アップロードされたファイルのサイズに対して制限をかけることも可能です。
 
 https://hono.dev/docs/middleware/builtin/body-limit#body-limit-middleware
 
-### streaming
-Honoではstreamを扱いやすくするhelperが用意されています。
+### ストリーミング
+
+Honoではストリーミングを扱いやすくするヘルパーが用意されています。
 https://hono.dev/docs/helpers/streaming
 
-最近ではOpenAIのAPI等がStreamをサポートしているため、それと組み合わせてリアルタイムに処理を行う例が増えています。
+最近ではOpenAIのAPI等がストリーミングをサポートしているため、それと組み合わせてリアルタイムに処理を行う例が増えています。
 ```ts:example.ts
 app.post("/chat", async (c) => {
     return streamSSE(c, async (stream) => {
@@ -525,7 +523,7 @@ app.post("/chat", async (c) => {
         });
 
         for await (const message of chatStream) {
-            stream.writeSSE({
+            stream.writeSSE({ // Server-Sent Events
                 data: JSON.stringify({
                     message: message.choices[0].message.content,
                     //...
@@ -536,10 +534,10 @@ app.post("/chat", async (c) => {
     });
 });
 ```
-上記のように、streamを扱いやすくでき、かつStreamingAPIには`onAbort`や`pipe`が実装されているため、Streamingの中断やReadableStreamの繋ぎ合わせ等も実装が可能となっています。
+上記のように、ストリーミングを扱いやすくでき、かつ**StreamingAPI**には`onAbort`や`pipe`が実装されているため、ストリーミングの中断やReadableStreamの繋ぎ合わせ等も実装が可能です。
 
 :::message
-Stream Helperの中で起きたエラーは、`onError`で補足することができないため、helper内のエラーは第三引数で処理する必要があります。
+ストリーミングヘルパーの中で起きたエラーは、`onError`で捕捉することができないため、ヘルパー内のエラーは第三引数で処理する必要があります。
 ```ts
 app.get('/stream', (c) => {
   return stream(
@@ -556,16 +554,15 @@ app.get('/stream', (c) => {
 ```
 :::
 
+公式でもVercelのSDKと組み合わせた例が紹介されています。
+@[tweet](https://x.com/honojs/status/1776714886019785174/photo/1)
 
-公式でもVercelのSDKと組み合わせた例も紹介されています。
-https://x.com/honojs/status/1776714886019785174/photo/1
-
-- WebSocket
-HonoではWebSocketを扱いやすくするためのHelperも用意されています。
+### WebSocket
+Honoでは**WebSocket**を扱いやすくするためのヘルパーも用意されています。
 https://hono.dev/docs/helpers/websocket
 
-特にRPCモードを使用した場合に、Server/Client間で非常に簡単にSocketオブジェクトを扱うことが可能になります。
-```ts
+特に**RPCモード**を使用した場合に、Server/Client間で非常に簡単にSocketオブジェクトを扱うことが可能になります。
+```ts:example.ts
 // server.ts
 const wsApp = app.get(
   '/ws',
@@ -582,15 +579,16 @@ const socket = client.ws.$ws()
 ```
 
 ## セキュリティについて
-Honoではセキュリティに関するミドルウェアやhelperが用意されています。
+
+Honoではセキュリティに関するミドルウェアやヘルパーが用意されています。
 
 ### Secure Headers Middleware
-基本的なセキュリティヘッダを設定するためのミドルウェアです。
-`strictTransportSecurity`などHTTPSを強制するヘッダや、XSSのフィルタリングを行う`xXssProtection`等のヘッダを設定することができます。
 
-https://hono.dev/docs/middleware/builtin/secure-headers#secure-headers-middleware
+基本的なセキュリティヘッダを設定するためのミドルウェアです。`strictTransportSecurity`などHTTPSを強制するヘッダや、XSSのフィルタリングを行う`xXssProtection`等のヘッダを設定することができます。
 
-```ts
+https://hono.dev/docs/middleware/builtin/secure-headers
+
+```ts:example.ts
 const app = new Hono()
 app.use(
   '*',
@@ -601,17 +599,17 @@ app.use(
 )
 ```
 
-nonce attributeを使用したCSPの設定も可能です。
-```ts
+**nonce属性**を使用したCSPの設定も可能です。
+```ts:example.ts
 import { secureHeaders, NONCE } from 'hono/secure-headers'
 import type { SecureHeadersVariables } from 'hono/secure-headers'
 
-// Specify the variable types to infer the `c.get('secureHeadersNonce')`:
+// 変数の型を指定して`c.get('secureHeadersNonce')`を推論：
 type Variables = SecureHeadersVariables
 
 const app = new Hono<{ Variables: Variables }>()
 
-// Set the pre-defined nonce value to `scriptSrc`:
+// 事前定義されたnonce値を`scriptSrc`に設定：
 app.get(
   '*',
   secureHeaders({
@@ -621,7 +619,7 @@ app.get(
   })
 )
 
-// Get the value from `c.get('secureHeadersNonce')`:
+// `c.get('secureHeadersNonce')`から値を取得：
 app.get('/', (c) => {
   return c.html(
     <html>
@@ -634,9 +632,12 @@ app.get('/', (c) => {
 })
 ```
 
-nonce値はctx経由で取得できるようになっています。
+nonce値はContext経由で取得できるようになっています。
+
 https://github.com/honojs/hono/blob/b9799e4f45da70e1fe49957b7c29e35208405d91/src/middleware/secure-headers/secure-headers.ts#L116C1-L120C2
-```ts
+
+内部実装は下記のように、`secureHeadersNonce`というキーでnonce値をContextに保存しています。
+```ts:example.ts
 const generateNonce = () => {
   const buffer = new Uint8Array(16)
   crypto.getRandomValues(buffer)
@@ -656,10 +657,11 @@ export const NONCE: ContentSecurityPolicyOptionHandler = (ctx) => {
 ```
 
 ### Authentication Middleware
-HonoではBasic, Bearer, JWTなどの認証を簡単に実装するためのミドルウェアが用意されています。
 
-後述しますがOpenAPIHonoと組み合わせてSwagger UIを組み合わせることができる3rd partyライブラリが存在します。このページのみBasicAuthをつけるなどの柔軟な認証設定が可能です。
-```ts
+Honoでは**Basic, Bearer, JWT**などの認証を簡単に実装するためのミドルウェアが用意されています。
+
+後述しますがOpenAPIHonoと組み合わせてSwagger UIを表示することができるサードパーティライブラリがあります。**特定のページのみBasicAuthをつける**等の柔軟な認証設定が可能です。
+```ts:example.ts
 import { swaggerUI } from '@hono/swagger-ui'
 import { basicAuth } from 'hono/basic-auth'
 //...
@@ -682,11 +684,10 @@ import { basicAuth } from 'hono/basic-auth'
   app.get('/swagger-ui', swaggerUI({ url: '/doc' }))
 ```
 
-
-
-JWTはhelperで基本的な操作(decode, sign, verify)を行えるようになっており、対称トークンであれば検証も行うことができます。
+### JWT
+**JWT**はヘルパーで基本的な操作（デコード、署名、検証）を行えるようになっており、一般的な対称トークンであれば検証も行うことができます。
 https://hono.dev/docs/helpers/jwt#verify
-```ts
+```ts:example.ts
 import { verify } from 'hono/jwt'
 
 const tokenToVerify = 'token'
@@ -695,17 +696,15 @@ const secretKey = 'mySecretKey'
 const decodedPayload = await verify(tokenToVerify, secretKey)
 ```
 
-HMACやRSA等基本的なアルゴリズムはサポートしていますが、Auth0やClerk等で使用される非対称トークンの公開鍵検証は実装されていないため、jose等のライブラリを組み合わせる必要があります。
+**HMAC**や**RSA**等、基本的なアルゴリズムはサポートしていますが、Auth0やClerk等で使用される**非対称トークンの公開鍵検証は実装されていない**ため、**jose**等のライブラリを組み合わせる必要があります。
 
 https://github.com/honojs/hono/issues/672
 
-
-
 ## Hono Proxy
-Honoの[Routerは正規表現やワイルドカードに対応している](https://hono.dev/docs/concepts/routers)ため、特定のPath以下全てに対してリクエストをProxyをする等の処理を簡単に書くことができます。
 
+Honoの[Routerは正規表現やワイルドカードに対応している](https://hono.dev/docs/concepts/routers)ため、特定のパス以下すべてに対してリクエストをプロキシする等の処理を簡単に書くことができます。
 
-```ts
+```ts:example.ts
 import { Hono } from 'hono'
 
 const app = new Hono()
@@ -725,20 +724,22 @@ app.get('*', (c) => {
 export default app
 ```
 
-差し込みのミドルウェアを使用してETagやキャッシュを挟むことも用意です。
-:::message
-Cloudflare Workersを使用したProxyパターンとして紹介されています。
+差し込みのミドルウェアを使用してETagやキャッシュを挟むことも容易です。
+
+
+Cloudflare Workersを使用したプロキシパターンとして紹介されています。
 https://zenn.dev/yusukebe/articles/647aa9ba8c1550
-:::
+
 
 ## executionCtx
-HonoのContextにはexecutionCtxというオブジェクトのプロパティがあります。
+
+HonoのContextには**executionCtx**というオブジェクトのプロパティがあります。
 https://hono.dev/docs/api/context#executionctx
 
-Cloudflare Workers等のServerless環境では、レスポンスが返った後に処理を行うことができません。
-そのため、重い処理はQueuingしたり、タイムアウトを気にしつつ同期的に処理を行う必要があります。
-このような状況下で`executionCtx.waitUntil`を使用することで、バックグラウンドで非同期処理を行うことが可能です。
-```ts
+**Cloudflare Workers等のServerless環境**では、レスポンスが返った後に処理を行うことができません。
+そのため、重い処理はキューイングしたり、タイムアウトを気にしつつ同期的に処理を行う必要があります。
+このような状況下で`executionCtx.waitUntil`を使用することで、**バックグラウンドで非同期処理**を行うことが可能です。
+```ts:example.ts
 // ExecutionContext object
 app.get('/foo', async (c) => {
   c.executionCtx.waitUntil(
@@ -748,8 +749,8 @@ app.get('/foo', async (c) => {
 })
 ```
 
-具体的なユースケースとしてはDBのコネクションの解放や、ログやメトリクスのemit/flush処理などが挙げられます。
-```ts
+具体的なユースケースとしては**DBのコネクションの解放**や、**ログやメトリクスのemit/flush処理**などが挙げられます。
+```ts:example.ts
 const PostUserApi = (app: App) =>
     app.openapi(postUserRoute, async (c: AppContext) => {
         const { db } = c.get("services");
@@ -775,17 +776,19 @@ const PostUserApi = (app: App) =>
     });
 ```
 
-以下ではwaitUntilとCacheを使用して、ISRを再現する例が紹介されており非常に参考になります。
+下記記事では`waitUntil`と`Cache`を使用して、ISRを再現する例が紹介されており非常に参考になります。
 
 https://zenn.dev/monica/articles/a9fdc5eea7f59c
 https://yusukebe.com/posts/2022/dcs/
 
-
 ## Hono Zod OpenAPIで実現するスキーマ駆動開発
-実際にAPIを開発する際はOpenAPIをベースとしたスキーマ駆動開発を行う場合が多いと思います。Honoでは3rd partyライブラリである`zod-openapi`と`swagger-ui`を使用することで、スキーマ駆動開発を円滑に行えるようになっています。
+
+実際にAPIを開発する際は**OpenAPIをベース**とした**スキーマ駆動開発**を行う場合が多いと思います。
+Honoではサードパーティライブラリである`zod-openapi`と`swagger-ui`を使用することで、スキーマ駆動開発を円滑に行えるようになっています。
 
 https://hono.dev/snippets/zod-openapi
 
+下記のように`OpenAPIHono`を定義し、routeを登録します。
 
 ```ts:entrypoint.ts
 import { OpenAPIHono } from '@hono/zod-openapi'
@@ -802,8 +805,8 @@ app.openapi(route, (c) => {
 })
 ```
 
-オリジナルとのHonoインスタンスの差分は`createRoute`を元にhttp methodおよびpath等を指定するようになります。
-```ts
+オリジナルのHonoインスタンスとの違いは`createRoute`を元にhttpメソッドおよびpath等を指定する点です。
+```ts:route.ts
 import { createRoute } from '@hono/zod-openapi'
 
 const route = createRoute({
@@ -825,12 +828,13 @@ const route = createRoute({
 })
 ```
 
-上記をOpenAPIHonoインスタンスに対して`openapi`メソッドを通じてRouterを登録するとZodのSchemaから自動的にOpenAPI Documentationを作成してくれるようになります。
+上記の**OpenAPIHonoインスタンス**に対して`openapi`メソッドを通じてRouterを登録すると、**ZodのSchemaから自動的にOpenAPI Documentationを作成してくれる**ようになります。
 また、`swagger-ui`を使用することで、自動生成されたOpenAPI DocumentationをSwagger UIとして表示することができます。
 
+https://hono.dev/snippets/swagger-ui
 
-さて、ここで[## ミドルウェアの設計]()でのfactoryパターンを使用し、OpenAPIHonoインスタンスを作成し手みます。
-```ts
+さて、ここで[ミドルウェアの設計](#ミドルウェアの設計)で紹介したfactoryパターンを使用し、OpenAPIHonoインスタンスを作成してみます。
+```ts:example.ts
 const newApp = () => {
     const app = new OpenAPIHono<HonoEnv>({
         defaultHook: handleZodError,
@@ -858,19 +862,22 @@ const newApp = () => {
     return app;
 }
 ```
-Honoに標準で用意されているメソッドはもちろん、OpenAPIHonoには`defaultHook`や`openAPIRegistry`の機能があります。
+OpenAPIHonoには、Honoに標準で用意されているメソッドはもちろん、`defaultHook`や`openAPIRegistry`のメソッドがあります。
 
 ### defaultHook
-`defaultHook`はZodのエラーハンドリングを行うためのフックです。
+
+`defaultHook`は**Zodのエラーハンドリング**を行うための**フック**です。
 https://github.com/honojs/middleware/tree/main/packages/zod-openapi#a-dry-approach-to-handling-validation-errors
 
-defaultHookはOpenAPIHonoクラスのインスタンスにおいて、バリデーションが失敗した場合や処理後に実行されるフックとして定義されます。
-内部的には`openapi`メソッドで登録されたRouteにアクセスが来た際にzValidatorを通じてバリデーションを行い、エラーが発生した場合に`defaultHook`内のresultがfalseになります。
+defaultHookはOpenAPIHonoクラスのインスタンスにおいて、**バリデーションが失敗した場合や処理後に実行されるフック**として定義されます。
+
+内部的には`openapi`メソッドで登録されたRouteにアクセスが来た際に**zValidator**を通じてバリデーションを行い、エラーが発生した場合に`defaultHook`内のresultがfalseになります。
 https://github.com/honojs/middleware/blob/023e07be0ac689cbbd659a017d833aaf67e19c75/packages/zod-openapi/src/index.ts#L292-L396
 
-そのため、rootで`defaultHook`を使用することで、バリデーションエラーに対するエラーハンドリングを一括で行うことができます。
-下記のようなhandlerを定義し、zodのエラーメッセージを好みのメッセージにしてメッセージとして返すことで、通常の`HTTPException`と同様のスキーマでエラーハンドリングを行うことが可能になります。
-```ts
+そのため、ルートのインスタンスで`defaultHook`を使用することで、バリデーションエラーに対するエラーハンドリングを一括で行うことができます。
+
+下記のようなhandlerを定義し、zodのエラーメッセージを返すことで、通常の`HTTPException`と同様のスキーマでエラーハンドリングを行うことが可能になります。
+```ts:example.ts
 const handleZodError = (
     result:
         | {
@@ -898,7 +905,7 @@ const handleZodError = (
 }
 ```
 
-またroute定義時にErrorSchemaも定義することが可能なため、汎用的なエラースキーマを定義しておくと使い手のエラーハンドリングが楽になります。
+また、route定義時に**ErrorSchema**も定義することが可能なため、汎用的なエラースキーマを定義しておくと使い手のエラーハンドリングが楽になります。
 ```ts:error.schema.ts
 const errorSchemaFactory = (code: z.ZodEnum<any>) => {
     return z.object({
@@ -945,12 +952,13 @@ const errorResponses = {
             },
         },
     },
-    // ...
-}
 
+
+ // ...
+}
 ```
 
-- RouteにErrorSchemaを定義
+RouteにErrorSchemaを定義
 ```ts:route.ts
 const postUserRoute = createRoute({
     tags: ["user"],
@@ -977,7 +985,7 @@ const postUserRoute = createRoute({
                 },
             },
         },
-        ...errorResponses,
+        ...errorResponses, // 定義したErrorSchemaを使用
     },
 });
 ```
@@ -991,8 +999,8 @@ OpenAPIHonoには`openAPIRegistry`というプロパティがあり、OpenAPIの
 
 https://github.com/honojs/middleware/tree/main/packages/zod-openapi#the-registry
 
-この機能により、セキュリティスキーム等を自動登録されたRouteのスキームと同じように登録することができます。
-```ts
+この機能により、セキュリティスキームを登録し、Routeから使用することが可能になります。
+```ts:example.ts
 // securitySchemes
 app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
     bearerFormat: "root key",
@@ -1012,8 +1020,11 @@ const postUserRoute = createRoute({
 # まとめ
 
 Honoの一連の機能を使いこなすことで、開発効率を向上させながら堅牢なAPIを開発することができます。
-ぜひ、Honoを使って開発を進めてみてください。
+ここでは紹介しきれていないHono RPCやHonoX等、さまざまな機能があるので公式ドキュメントを参照しながら、ぜひHonoを使って開発を進めてみてください。
 
 ## 参考
-
-
+https://hono.dev/
+https://speakerdeck.com/yusukebe/shi-jian-etuziyusukesu
+https://zenn.dev/yusukebe/articles/a00721f8b3b92e
+https://zenn.dev/monica/articles/a9fdc5eea7f59c
+https://yusukebe.com/posts/2022/dcs/
