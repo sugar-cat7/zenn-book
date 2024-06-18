@@ -1,5 +1,5 @@
 ---
-title: "Honoを使い倒したい"
+title: "Honoを使い倒したい2024"
 emoji: "❤️‍🔥"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [hono,typescript,cloudflareworkers]
