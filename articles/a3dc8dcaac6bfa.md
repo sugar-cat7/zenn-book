@@ -4,6 +4,7 @@ emoji: "❤️‍🔥"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [hono,typescript,cloudflareworkers]
 published: false
+publication_name: aishift
 ---
 
 # はじめに
@@ -553,7 +554,7 @@ app.get('/stream', (c) => {
 :::
 
 公式でもVercelのSDKと組み合わせた例が紹介されています。
-@[tweet](https://x.com/honojs/status/1776714886019785174/photo/1)
+@[tweet](https://x.com/honojs/status/1776714886019785174)
 
 ### WebSocket
 Honoでは**WebSocket**を扱いやすくするためのヘルパーも用意されています。
