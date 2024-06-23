@@ -3,7 +3,7 @@ title: "Honoを使い倒したい2024"
 emoji: "❤️‍🔥"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: [hono,typescript,cloudflareworkers]
-published: false
+published: true
 publication_name: aishift
 ---
 
@@ -14,6 +14,13 @@ publication_name: aishift
 
 Honoの基本的なコンセプトや網羅的な実装例については、公式ドキュメントを参照してください。
 https://hono.dev/concepts/motivation
+
+:::message
+Hono Conference 2024にて発表した内容についても追記しました！
+[Honoの活用事例](#Honoの活用事例)にて、AI Shift内でHonoを使用した実際の開発事例を紹介しています。
+:::
+https://speakerdeck.com/sugarcat7/using-hono-in-b2b-saas-application
+
 
 # 基本編
 
@@ -1015,6 +1022,135 @@ const postUserRoute = createRoute({
 ```
 
 ![alt text](/images/hono/bearer.png)
+
+# Honoの活用事例
+
+AI ShiftではHonoを使用してAI WorkerというB2BマルチテナントSaaSアプリケーションの開発を行っています。
+
+https://www.ai-shift.co.jp/3958
+
+設計や使用技術の詳細についてはこちらのブログを参照ください。
+
+https://zenn.dev/aishift/articles/ce9783a0d7acd0
+
+## Tech Stack
+
+AI Workerはお客様環境や自社環境のk8s環境にデプロイするために、各サービスをコンテナ化して扱っています。
+
+![alt text](/images/hono/techstack.png)
+
+その中で、フロントエンドから使用するAPIにHonoを採用しています。
+
+![alt text](/images/hono/techstack2.png)
+
+## ユースケース
+AI Workerのキーワードは`AI`と`マルチテナントSaaS`です。
+
+### AI
+AI Workerは名前の通りAIを活用したサービスを提供しています。
+AIと一括りにすると領域が広すぎるので、ここではLLMの利用について紹介します。
+
+- LLM
+
+LLMというと昨今では**GPT**や**Claude**の利用が挙げられます。
+
+特にOpenAI社が提供するGPTのAPIでは、LLMの回答生成時に**Stream(Server Sent Event)**による回答の生成方法をサポートしています。
+
+![alt text](/images/hono/stream.gif)
+
+これにより、インタラクティブな対話型UIを実現することが可能になります。
+
+前述した[SSE](#ストリーミング)のヘルパーを使用することで、Hono上で簡単にストリーミングを実装することができます。
+
+- RAG
+
+このLLMによるテキスト生成を活用するために、弊社ではRAGを取り入れた社内文書検索の仕組みを取り入れています。
+
+RAGはユーザ**Input**(Query) をもとに**Vector Store**から関連性に基づいて文書を検索し、その結果を**Promptに埋め込み回答LLMで生成する**という仕組みです。(とてもざっくり)
+![alt text](/images/hono/rag1.png)
+![alt text](/images/hono/rag2.png)
+![alt text](/images/hono/rag3.png)
+![alt text](/images/hono/rag4.png)
+
+
+このような仕組みを活用するためには、あらかじめ検索に使用するためのドキュメントを何らかの方法でVector Storeに登録しておく必要があります。
+![alt text](/images/hono/rag5.png)
+
+ここでHonoの[ファイルアップロード](#ファイルアップロード)が活躍します。
+
+### B2BマルチテナントSaaS
+
+AI WorkerはB2BマルチテナントSaaSアプリケーションです。
+お客様ごとに異なる設定やセキュリティポリシーを持つため、データを適切に分離する必要があります。
+![alt text](/images/hono/b2b.png)
+
+テナントごとのDB特定のために、`TenantID`を使用してテナントごとのデータを特定しています。
+
+HonoのContextを使用して、リクエストごとに`TenantID`を保持することで、テナントごとのデータを取得することができます。
+
+```ts:example.ts
+const getUser = (c: AppContext): Result<User> => {
+    const p: Payload = c.get('jwtPayload')
+    if (!p.org_id) {
+        return Result.fail(new AppError(StatusCode.forbidden, 'Please select an organization'))
+    }
+    c.set('sessionUser', {
+        userId: p.sub,
+        tenantId: p.org_id,
+    })
+}
+
+const middleware = (): MiddlewareHandler<HonoEnv> => {
+    return async (c, next) => {
+        const res = await getUser(c)
+
+        if (!res.isSuccess) {
+            return c.json({ message: res.getError().message }, res.getError().code)
+        }
+        const { logger } = c.get('services')
+        logger.info({
+            message: '[Request Started]',
+            method: c.req.method,
+            url: c.req.url,
+            userInfo: c.get('sessionUser'),
+        })
+        return await next()
+    }
+}
+```
+
+任意のIdPから取得したJWTのペイロードからtenantIdを取得し、Contextにセットし伝播させることでテナントデータを扱いやすくします。
+```ts
+c.set('sessionUser', {
+    userId: p.sub,
+    tenantId: p.org_id,
+})
+```
+
+この際にLoggerを同時に仕込み、アクセスログとして残すことも可能です。(どのTenantのユーザがどのリクエストを投げたかを残す)
+```ts
+const { logger } = c.get('services')
+logger.info({
+    message: '[Request Started]',
+    method: c.req.method,
+    url: c.req.url,
+    userInfo: c.get('sessionUser'),
+})
+```
+
+- Security
+
+最後に簡単なセキュリティ対策の例を紹介します。
+[セキュリティについて](#セキュリティについて)で紹介した`Secure Headers Middleware`の使用や、JWTの適切な検証はもちろんのこと、アプリケーション内での人が起こすミスを防ぐことも必要です。
+
+例えば弊社ではアプリケーションの構築にClean Architectureを採用しており、各レイヤー間のEntityの詰め替え処理を行う際にZodによるバリデーションを行っています。
+
+![alt text](/images/hono/clean.png)
+
+これは例ですが、仮に`User`というEntityに`password`というフィールドが含まれている場合、そのままDBに保存したり、レスポンスに含めることはセキュリティ上好ましくありません。
+そこで、Zodによるparseを活用し、`password`フィールドを含めないようにすることが可能です。
+![alt text](/images/hono/clean2.png)
+
 
 # まとめ
 
