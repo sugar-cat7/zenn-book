@@ -1025,6 +1025,10 @@ const postUserRoute = createRoute({
 
 # Honoの活用事例
 
+この内容はHono Conference 2024にて発表した内容をもとにしています。
+https://speakerdeck.com/sugarcat7/using-hono-in-b2b-saas-application
+
+
 AI ShiftではHonoを使用してAI WorkerというB2BマルチテナントSaaSアプリケーションの開発を行っています。
 
 https://www.ai-shift.co.jp/3958
