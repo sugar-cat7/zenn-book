@@ -25,6 +25,7 @@ https://speakerdeck.com/sugarcat7/using-hono-in-b2b-saas-application
 # 基本編
 
 この章では、Honoの基本的な使い方を紹介します。
+※Hono: v4.3系
 
 ## App/Contextオブジェクトの使い方
 
