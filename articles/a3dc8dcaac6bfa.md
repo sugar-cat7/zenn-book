@@ -15,6 +15,18 @@ publication_name: aishift
 Honoの基本的なコンセプトや網羅的な実装例については、公式ドキュメントを参照してください。
 https://hono.dev/concepts/motivation
 
+
+### 更新情報
+:::details 2024/7/29更新
+- [App/Contextオブジェクトの使い方を追記](#appcontextオブジェクトの使い方)
+- [Combine Middleware](#combine-middleware)
+- [Request ID Middleware](#request-id-middleware)
+- [IP Restrict Middleware](#ip-restrict-middleware)
+- [Cloudflare Pages Middleware](#cloudflare-pages-middleware)
+- [Service Worker Adapter](#service-worker-adapter)
+:::
+
+
 :::message
 Hono Conference 2024にて発表した内容についても追記しました！
 [Honoの活用事例](#Honoの活用事例)にて、AI Shift内でHonoを使用した実際の開発事例を紹介しています。
@@ -112,6 +124,10 @@ https://hono.dev/helpers/factory
 
 @[tweet](https://x.com/yusukebe/status/1780538942032650337)
 
+Hono v4.5.0以降では`type`だけでなく`interface`もBindingやVariablesに直接使用できるようになりました。
+この変更により、wrangler cliにより生成した型をそのまま使用できるなど、Cloudflareとの親和性が向上しています。
+
+
 ## ミドルウェアの設計
 
 APIにおけるミドルウェアの責務は、ユーザー認証・認可、ロギング、キャッシュ等の共通処理を行うことです。
@@ -168,6 +184,36 @@ export const init = (): MiddlewareHandler<HonoEnv> => {
 ```
 
 上記のように任意のオブジェクトをContextを通してhandlerから安全に利用することが可能になります。
+
+### Combine Middleware
+Hono v4.5.0以降では`Combine Middleware`を使用することで、複数のミドルウェアを組み合わせて扱えるようになります。
+
+https://hono.dev/docs/middleware/builtin/combine#combine-middleware
+
+下記を組み合わせることでミドルウェアの実行を制限できます。実行はミドルウェアの定義順です。
+
+`some` - 複数のミドルウェアのうち一つ実行
+`every` - 複数のミドルウェアを全て実行
+`except` - 指定したミドルウェアを除外して実行
+
+例えばあるエンドポイントを保護する場合に、IP制限またはBearer認証のどちらかを通過するといった処理を行うことができます。
+
+例えばメンテナンスページ以外では、ミドルウェアを実行したり、
+```ts:example.ts
+app.use('*', except(['/maintenance'], middleware1))
+```
+
+IP制限に引っかかった場合は、Bearer認証を行うといった制御も簡単に記述することが可能です。
+```ts:example.ts
+app.use(
+  '*',
+  some(
+    ipRestriction(getConnInfo, { allowList: ['192.168.0.2'] }),
+    bearerAuth({ token })
+  )
+)
+```
+
 
 ## エラーハンドリングについて
 
@@ -736,6 +782,110 @@ export default app
 
 Cloudflare Workersを使用したプロキシパターンとして紹介されています。
 https://zenn.dev/yusukebe/articles/647aa9ba8c1550
+
+
+## Request ID Middleware
+Hono v4.5.0からRequest IDを自動で生成しContextで扱える便利ミドルウェアが追加されました。
+
+https://hono.dev/docs/middleware/builtin/request-id
+
+```ts
+import { Hono } from 'hono'
+import { requestId } from 'hono/request-id'
+
+const app = new Hono()
+
+app.use('*', requestId())
+
+app.get('/', (c) => {
+  return c.text(`Your request id is ${c.get('requestId')}`)
+})
+```
+
+このrequestIDですが、IDの`generator`として`crypto.randomUUID()`を使用しています。大体どのランタイムでも動くと思いますが、自分でカスタマイズも可能になっています。
+```ts
+app.use('*', requestId({
+  generator: () => {
+    return 'custom-request-id'
+  }
+}))
+```
+
+さらに`headerName`を指定してあげることで、リクエストヘッダーからrequestIDを取得することも可能です。(デフォルトは`X-Request-ID`)
+
+```ts
+app.use('*', requestId({
+  headerName: 'X-Custom-Request-ID'
+}))
+```
+この機能により、フロントエンドからバックエンドまで透過的にRequest IDを扱うことも可能になります。
+
+## IP Restrict Middleware
+
+Hono v4.5.0からIP制限をかけるためのミドルウェアが追加されました。
+このミドルウェアによりIPv4, IPv6のアドレスを指定してアクセス制限をかけることができます。
+**allow/deny**, **CIDR**形式の指定も可能です。
+
+https://hono.dev/docs/middleware/builtin/ip-restriction
+
+```ts
+import { Hono } from 'hono'
+import { getConnInfo } from 'hono/bun'
+import { ipRestriction } from 'hono/ip-restriction'
+
+const app = new Hono()
+
+app.use(
+  '*',
+  ipRestriction(getConnInfo, {
+    denyList: [],
+    allowList: ['127.0.0.1', '::1']
+  })
+)
+```
+
+上記で使用している`getConnInfo`は`Context`からIPアドレスを取得するためのhelperです。`getConnInfo`自体はadaptorとして各ランタイム、ホスティング先ごとに実装されています。
+
+https://hono.dev/docs/helpers/conninfo#conninfo-helper
+
+## Cloudflare Pages Middleware
+
+Hono v4.5.0より、Cloudflare Pages Functionのミドルウェアとしてそのまま扱えるアダプターが追加されました。
+
+https://hono.dev/docs/getting-started/cloudflare-pages#cloudflare-pages-middleware
+
+```ts:example.ts
+import { handleMiddleware } from 'hono/cloudflare-pages'
+import { basicAuth } from 'hono/basic-auth'
+
+export const onRequest = handleMiddleware(
+  basicAuth({
+    username: 'hono',
+    password: 'acoolproject'
+  })
+)
+```
+
+Pages FunctionとしてHonoを使用する際には、このアダプターを使用することで簡単にミドルウェアを適用することができます。
+https://developers.cloudflare.com/pages/functions/middleware/
+
+## Service Worker Adapter
+Hono v4.5.0より、Service Worker上でHonoが使用できるアダプターが追加されました。
+ブラウザ上でのバックグラウンド処理や、オフライン対応のためにService Workerを使用する際に、Honoの統合が容易になっています。
+
+https://hono.dev/docs/getting-started/service-worker
+
+```ts:sw.ts
+import { Hono } from 'hono'
+import { handle } from 'hono/service-worker'
+
+const app = new Hono().basePath('/sw')
+app.get('/', (c) => c.text('Hello World'))
+
+self.addEventListener('fetch', handle(app))
+```
+
+このファイルをService Workerとしてmain側で登録することで、Honoアプリケーションは/sw.tsへのアクセスをinterceptし、Honoのルーターを使用してリクエストを処理します。
 
 
 ## executionCtx
