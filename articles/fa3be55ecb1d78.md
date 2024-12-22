@@ -64,12 +64,12 @@ https://qiita.com/MarthaS/items/c136a4f6d58845a7fa1e
 - **Datadog**
   
   モバイル版**Unity**向けの**RUM**（**Real User Monitoring**）機能を提供しています。ただし、デスクトップ版や**コンソール**、**Web**向けの**Unityビルド**には対応していません。  
-  https://docs.datadoghq.com/ja/real_user_monitoring/mobile_and_tv_monitoring/setup/unity/
+https://docs.datadoghq.com/ja/real_user_monitoring/mobile_and_tv_monitoring/setup/unity/
 
   > Datadog does not support Desktop (Windows, Mac, or Linux), console, or web deployments from Unity. If you have a game or application and want to use Datadog RUM to monitor its performance, create a ticket with [Datadog support](https://docs.datadoghq.com/ja/help/).
 
   **ブラウザ**であれば、**RUM**を使用することで**エラートラッキング**や**Core Web Vitals**の指標を収集することが可能です。  
-  https://docs.datadoghq.com/ja/real_user_monitoring/browser/monitoring_page_performance/
+https://docs.datadoghq.com/ja/real_user_monitoring/browser/monitoring_page_performance/
 
 ### Embrace
 
