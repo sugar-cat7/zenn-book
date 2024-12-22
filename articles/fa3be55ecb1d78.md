@@ -54,12 +54,12 @@ https://unity3d.jp/game/dena-backtrace/
   
   モバイル版**Unity**向けの**SDK**を提供しており、リアルタイムでアプリの**パフォーマンス**を監視可能です。
 
-  https://docs.newrelic.com/jp/docs/mobile-monitoring/new-relic-mobile-unity/monitor-your-unity-application/
-  https://qiita.com/ume67026265/items/72d5068edd9a77baef2e
+https://docs.newrelic.com/jp/docs/mobile-monitoring/new-relic-mobile-unity/monitor-your-unity-application/
+https://qiita.com/ume67026265/items/72d5068edd9a77baef2e
 
   **ブラウザ**であれば、**ブラウザモニタリング**を使用して、**エラートラッキング**や**Core Web Vitals**の指標を収集することが可能です。  
-  https://docs.newrelic.com/jp/docs/browser/browser-monitoring/getting-started/introduction-browser-monitoring/
-  https://qiita.com/MarthaS/items/c136a4f6d58845a7fa1e
+https://docs.newrelic.com/jp/docs/browser/browser-monitoring/getting-started/introduction-browser-monitoring/
+https://qiita.com/MarthaS/items/c136a4f6d58845a7fa1e
 
 - **Datadog**
   
@@ -284,3 +284,6 @@ https://docs.datadoghq.com/ja/monitors/downtimes
 その際に、モニタータグで大まかにチームを指定し、ダウンタイムスコープを利用してサービスや環境を指定してモニターを管理することで、アラート実行時に動的に必要なサービスや環境のグループで一致するアラートのみを無視することが可能になります（ダウンタイムのグループスコープは、モニター固有の対象の後にマッチするため）。  
 https://docs.datadoghq.com/ja/monitors/downtimes/?tab=%E3%83%A2%E3%83%8B%E3%82%BF%E3%83%BC%E3%82%BF%E3%82%B0%E3%81%A7%E6%8C%87%E5%AE%9A#%E3%83%80%E3%82%A6%E3%83%B3%E3%82%BF%E3%82%A4%E3%83%A0%E3%82%B9%E3%82%B3%E3%83%BC%E3%83%97
 ![alt text](/images/dd-sentry/downtime.png)
+
+## まとめ
+この記事では、**クライアント**および**サーバーサイド**のエラートラッキングを一元管理し、効果的にエラートラッキングを行うための設計や便利なツール群を紹介しました。
