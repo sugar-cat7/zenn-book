@@ -127,15 +127,15 @@ https://sentry.io/pricing/
 さらに、Sentryのトレーシング機能は現時点ではまだベータ版であるため、対応状況としては今後の改善に期待する段階と言えます。  
 https://sentry.io/for/tracing/
 
-**Sentry**は**エージェント型**での**テレメトリデータ収集方法**を公式にはサポートしていません。特に**Kubernetes**を使用している場合、**インフラ属性のタグ付け**や**Pod単位**での**リソース使用量**、細かな**メトリクス**を**収集・可視化**する際に**困難**が伴います。
-ただし、**Sentry**も**ベータ版**ながら**OpenTelemetry**（**OTel**）のサポートを開始しており、自前で**OTel Collector**を設置すればこの**制約**を回避することは可能です。
+Sentryはエージェント型でのテレメトリデータ収集方法を公式にはサポートしていません。特にKubernetesを使用している場合、インフラ属性のタグ付けやPod単位でのリソース使用量、細かなメトリクスを収集・可視化する際に困難が伴います。
+ただし、Sentryもベータ版ながらOpenTelemetry（OTel）のサポートを開始しており、自前でOTel Collectorを設置すればこの制約を回避することは可能です。
 
-一方、**Datadog**を利用する場合は、**Datadog Operator**を活用することで、各**ノード**に**エージェント**の**Pod**を作成できます。これにより、**ホストメトリクス**の**収集**が容易になり、**Datadog監視バックエンド**との**シームレスな統合**も可能です。
+一方、Datadogを利用する場合は、Datadog Operatorを活用することで、各ノードにエージェントのPodを作成できます。これにより、ホストメトリクスの収集が容易になり、Datadog監視バックエンドとのシームレスな統合も可能です。
 https://docs.datadoghq.com/ja/getting_started/containers/datadog_operator/
 
 ### Datadogにおけるエラートラッキングについて
 
-**Datadog**は、**バックエンドサービス**の**エラートラッキング**において、主に**APM**ベースと**ログベース**の2つの**アプローチ**を提供しています。
+**Datadog**は、バックエンドサービスのエラートラッキングにおいて、主にAPMベースとログベースの2つのアプローチを提供しています。
 
 [**Error Tracking for Backend Services**](https://docs.datadoghq.com/tracing/error_tracking/)  
 [**Error Tracking for Logs**](https://docs.datadoghq.com/logs/error_tracking/)
@@ -289,4 +289,4 @@ https://docs.datadoghq.com/ja/monitors/downtimes/?tab=%E3%83%A2%E3%83%8B%E3%82%B
 ![alt text](/images/dd-sentry/downtime.png)
 
 ## まとめ
-この記事では、**クライアント**および**サーバーサイド**のエラートラッキングを一元管理し、効果的にエラートラッキングを行うための設計や便利なツール群を紹介しました。
+この記事では、クライアンおよびサーバーサイドのエラートラッキングを一元管理し、効果的にエラートラッキングを行うための設計や便利なツール群を紹介しました。
