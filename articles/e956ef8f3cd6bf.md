@@ -16,7 +16,7 @@ https://qiita.com/advent-calendar/2025/sugarcat
 - [Fleet編](https://zenn.dev/king/articles/e956ef8f3cd6bf) ←今ここ
 - GameServerAllocation編
 - FleetAutoscaler編
-- Metrics編
+
 
 
 ### Fleetとは

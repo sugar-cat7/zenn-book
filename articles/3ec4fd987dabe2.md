@@ -7,7 +7,7 @@ published: false
 ---
 
 こんにちは、[@sugar235711](https://twitter.com/sugar235711)です。
-この記事は「ひとりで気になるOSSのソースコード全部読んで何かする Advent Calendar 2025」1日目の記事です。
+この記事は「ひとりで気になるOSSのソースコード全部読んで何かする Advent Calendar 2025」5日目の記事です。
 https://qiita.com/advent-calendar/2025/sugarcat
 
 - [全体編](https://zenn.dev/king/articles/4e55f030aa01ee)
@@ -15,7 +15,7 @@ https://qiita.com/advent-calendar/2025/sugarcat
 - [Fleet編](https://zenn.dev/king/articles/e956ef8f3cd6bf)
 - [GameServerAllocation編](https://zenn.dev/king/articles/a156a6243724df)
 - FleetAutoscaler編 ←今ここ
-- Metrics編
+
 
 ## Fleet Autoscalerに関して
 お待ちかねのFleet Autoscalerに関してです。
@@ -199,4 +199,5 @@ https://github.com/googleforgames/agones/blob/main/examples/wasmfleetautoscaler.
 
 ## まとめ
 FleetAutoscalerについて見ていきました。
-明日はMetrics関連について見ていきます。
+まだMetricsやCore部分の実装はありますが、ブログには残しません。興味ある方はソースコード見てください。
+明日からは別のOSSを書いていきます。
