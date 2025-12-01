@@ -11,18 +11,13 @@ published: false
 https://qiita.com/advent-calendar/2025/sugarcat
 
 
-- 全体編
-- GameServer編
-- Fleet編 ←今ここ
+- [全体編](https://zenn.dev/king/articles/4e55f030aa01ee)
+- [GameServer編](https://zenn.dev/king/articles/003f7b79409b4a)
+- [Fleet編](https://zenn.dev/king/articles/e956ef8f3cd6bf) ←今ここ
 - GameServerAllocation編
-- Allocation Controller/APIService編
 - FleetAutoscaler編
-- Allocator Service編
-- Agones Coreコマンド編
 - Metrics編
-- 各種Cloud統合編
-- SDK編
-- OpenMatch統合編
+
 
 ### Fleetとは
 お待ちかねFleetです。
