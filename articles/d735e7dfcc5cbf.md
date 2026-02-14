@@ -1,5 +1,5 @@
 ---
-title: "リアルタイムAI × アバター面接で場数を増やす: BA-SUU開発記"
+title: "リアルタイムAI × アバター面接で場数を増やす~BA-SUU開発記~"
 emoji: "🎤"
 type: "idea"
 topics: ["gch4", "googlecloud", "gemini", "nextjs", "typescript"]
