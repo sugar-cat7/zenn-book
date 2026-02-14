@@ -12,8 +12,7 @@ published: false
 
 BA-SUU（就活・場数）は、AIアバターと音声で面接練習ができるWebアプリです。練習相手がいない、お金もない、でも面接は怖い──そんな就活生が「場数」を踏めるように作りました。
 
-@[youtube](gCh0PfUTDDM)
-
+https://www.youtube.com/watch?v=gCh0PfUTDDM
 
 ---
 
@@ -359,7 +358,7 @@ VRM規格には母音ごとの口形状（`Aa/Ee/Oh等`）が定義されてい�
 システムは主にCloudflare（Webフロントエンド）、Google Cloud Platform（バックエンド/AI）、外部サービス（STT/DB/Email）の構成です。
 
 - 現状、WebSocketはクライアントから直接接続する方式のため、バックエンドはCloud Run APIとWorker Pool中心のサーバーレス構成です。
-- DBにはTiDB Cloudを採用しています。TiDB ServerlessはGoogle CloudネイティブVPC上ではなくAWS側で提供されるため、Cloud NATの固定IP制御でTiDB Cloudへ接続しています。システムの構成上トラフィック規模は地位ないので、転送料は許容範囲です。
+- DBにはTiDB Cloudを採用しています。TiDB ServerlessはGoogle CloudネイティブVPC上ではなくAWS側で提供されるため、Cloud NATの固定IP制御でTiDB Cloudへ接続しています。システムの構成上トラフィック規模は小さいので、転送料は許容範囲です。
 - メール送信はPoC段階のためResendを利用しています。1ドメインの送信者認証が可能で、月3,000通までは無料枠で運用できます。本運用でSLAを定める段階で、必要に応じてSendGridやSESへ移行予定です。
 
 ![BA-SUU Infrastructure Architecture](/images/basuu/arch.png)
@@ -372,15 +371,19 @@ BA-SUUのAPIサーバーへのアクセスはすべてCloudflare Tunnel経由で
 接続フロー:
 
 ```
-User → Cloudflare Edge（SSL終端 / DDoS / WAF / CDN）
-  → Cloudflare Tunnel（暗号化、HTTP/2永続接続）
-  → cloudflared（Cloud Run Worker Pool、VPC内、アウトバウンドのみ）
+User → Cloudflare Edge（SSL終端）
+  → Cloudflare Tunnel（HTTP/2）
+  → cloudflared（Cloud Run Worker Pool）
   → Private Google Access
   → Private DNS Zone（*.a.run.app → 199.36.153.8/30）
   → Cloud Run API（INTERNAL_ONLY ingress）
 ```
 
-cloudflaredはCloudflareとの長時間HTTP/2またはUDP接続を維持する必要があります。Cloud Run Serviceはリクエスト駆動でリクエストタイムアウトなどの制約があるため、Tunnelコネクタの常時接続用途には不向きです。Worker Poolはリクエスト非依存ワークロードを載せられ、manual instance countで接続維持に必要な常駐数を制御できるため、Tunnelコネクタとして適しています。
+https://docs.cloud.google.com/run/docs/managing/workerpools
+https://docs.cloud.google.com/run/docs/securing/private-networking
+
+`cloudflared`はCloudflareとの長時間HTTP/2またはUDP接続を維持する必要があります。Cloud Run Serviceはリクエスト駆動でリクエストタイムアウトなどの制約があるため、Tunnelコネクタの常時接続用途には不向きです。
+Worker Poolはリクエスト非依存ワークロードを載せられ、`manual instance count`で接続維持に必要な常駐数を制御できるため、Tunnelコネクタとして適しています。
 
 参考
 https://developers.cyberagent.co.jp/blog/archives/61112/
@@ -388,12 +391,9 @@ https://developers.cyberagent.co.jp/blog/archives/61112/
 
 ## 今後の展望
 
-### プロダクト拡張
 - 匿名模擬面接マッチング: 求職者同士のP2P練習。AIフィードバックと人間からの印象を両方得られる
 - グループディスカッション（GD）練習: 複数AIアバターとのGDシミュレーション
 - 業界・企業別シナリオ: IT / コンサル / メーカー等、業界特性に応じた質問傾向を再現
-
-### 技術進化
 - マルチモーダルフィードバック: 映像分析による姿勢・視線・表情の評価
 - 適応的難易度調整: 過去スコアに基づくパーソナライズされた面接難度
 - リアルタイムコーチングオーバーレイ: 練習中に改善ヒントを画面表示
