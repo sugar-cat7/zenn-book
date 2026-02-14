@@ -23,7 +23,7 @@ BA-SUU（就活・場数）は、AIアバターと音声で面接練習ができ
 
 2026年卒の就活を表す漢字1位は「苦」（4年ぶり）[^3]。面接に「自信がある」と答えた学生は2割に満たないという調査もあります[^4]。面接は就活全体を通じて、最も心理的負荷が高いプロセスであり続けています。
 
-### 面接受験は平均約10社──練習量が圧倒的に足りない
+### 面接受験は平均約10社
 
 2025年卒の7月時点では、採用面接を受けた社数平均累計は10.4社でした[^5]。26年卒のエントリー数は28.5社（過去5年最多）に達していますが、面接まで進む企業はその一部にすぎません[^6]。
 
@@ -42,7 +42,7 @@ BA-SUU（就活・場数）は、AIアバターと音声で面接練習ができ
 
 キャリアセンターは「就活対策（面接・ES等）」を今後利用したい学生が63.3%にのぼる一方、利用しない学生の35.9%は「活用方法がわからない」と回答しています[^8]。ニーズはあるのに、月1回程度のペースでは実戦的な練習量に到底足りません。
 
-### 就活生はAIに頼り始めている──でもAI面接は怖い
+### 就活生はAIに頼り始めている
 
 2026年卒の就活生の82.7%がAIを利用した経験があり、就活でのAI利用率は66.6%に達しています[^12]。面接対策でのAI利用は36.6%で、前年（17.8%）から18.8ポイント増と急伸しました[^12]。
 
@@ -86,16 +86,16 @@ BA-SUUはこの矛盾に応えるプロダクトです。AIを「練習相手」
 
 ### Gemini Live API × Deepgram のデュアルパイプライン
 
-BA-SUUの音声対話は、Gemini Live API（応答生成 + TTS）とDeepgram Nova-3（STT）を併用するデュアルパイプラインで構成しています。
+BA-SUUの音声対話は、[Gemini Live API](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/live-api?hl=ja)（応答生成 + TTS）と[Deepgram Nova-3（STT）](https://developers.deepgram.com/docs/models-languages-overview)を併用するデュアルパイプラインで構成しています。
 
 最初はGemini Live APIだけで完結させようとしました。短い発話なら問題ないのですが、長い日本語の発話で話していない内容が文字起こしされてしまい、フィードバックの品質が根本から崩れました。
 https://zenn.dev/king/scraps/e2ffbf09393486
 
-試行錯誤の結果、STTはDeepgram Nova-3に完全分離し、Live APIは応答生成+TTS専用という構成に落ち着きました。
+試行錯誤の結果、STTは`Deepgram Nova-3`に完全分離し、`Live API`は応答生成+TTS専用という構成に落ち着きました。
 
-- AudioWorkletでマイク音声を16kHz Int16 PCMに変換し、Deepgram WebSocketに送信
+- [AudioWorklet](https://developer.mozilla.org/ja/docs/Web/API/AudioWorklet)でマイク音声を16kHz Int16 PCMに変換し、Deepgram WebSocketに送信
 - VADはDeepgram側に任せ、応答生成はLive APIに委譲。ストリームでDeepgram → Live APIへ文字起こし結果を渡す
-- Ephemeral Tokenを使い、各クライアントが直接WebSocket接続する構成にしているため、中継サーバーを持たない
+- [Ephemeral Token](https://ai.google.dev/gemini-api/docs/ephemeral-tokens)を使い、各クライアントが直接WebSocket接続する構成にしているため、中継サーバーを持たない
 
 ```mermaid
 sequenceDiagram
@@ -201,7 +201,9 @@ sequenceDiagram
 
 - エコーキャンセル
 
-リアルタイム音声対話で特に厄介だったのはエコーループです。スピーカーからのAI音声がマイクに回り込み、Deepgramが誤認識し、turnCompleteが送信され、Geminiが自身の発話を中断する連鎖が発生します。対策として、出力経路のAnalyserNodeからリアルタイムにRMSを計算し、閾値を超えている間はDeepgramの認識結果を破棄することで、エコー由来のturnComplete送信を防いでいます。音声ストリーム自体は止めず、アプリケーション層のテキストレベルのフィルタリングで制御しています。
+リアルタイム音声対話で特に厄介だったのはエコーループです。
+スピーカーからのAI音声がマイクに回り込み、Deepgramが誤認識し、`turnComplete`が送信され、Geminiが自身の発話を中断する連鎖が発生します。
+対策として、出力経路の[AnalyserNode](https://developer.mozilla.org/ja/docs/Web/API/AnalyserNode)からRMSを計算し、閾値を超えている間はDeepgramの認識結果を破棄することで、エコー由来の`turnComplete`送信を防いでいます。音声ストリーム自体は止めず、アプリケーション層のテキストレベルのフィルタリングで制御しています。
 
 
 ### Vertex AI Evaluation Serviceによるマルチメトリクス評価パイプライン
@@ -349,7 +351,7 @@ https://github.com/pixiv/three-vrm
   }
 ```
 
-VRM規格には母音ごとの口形状（Aa/Ee/Oh等）が定義されていますが、現状はRMS 1値でAaのみを駆動するシンプルな方式です。より自然なリップシンクには、音声から母音を推定して各プリセットを個別に駆動する必要があり、今後の課題です。この領域も、今後のAI活用余地が大きいと考えています。
+VRM規格には母音ごとの口形状（`Aa/Ee/Oh等`）が定義されていますが、現状はRMS 1値でAaのみを駆動するシンプルな方式です。より自然なリップシンクには、音声から母音を推定して各プリセットを個別に駆動する必要があり、今後の課題です。この領域も、今後のAI活用余地が大きいと考えています。
 
 
 ## インフラ構成
